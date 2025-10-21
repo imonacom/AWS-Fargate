@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fargate PoC</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Fargate PoC Çalışıyor 🎉</h1>
+  <p>Bu sayfa ECS Fargate üzerinde yayınlanıyor.</p>
+  <button onclick="loadUsers()">Kullanıcıları Göster</button>
+  <ul id="userList"></ul>
+
+  <script>
+    async function loadUsers() {
+      try {
+        const res = await fetch("/users");
+        const data = await res.json();
+        const ul = document.getElementById("userList");
+        ul.innerHTML = "";
+        data.forEach(u => {
+          const li = document.createElement("li");
+          li.textContent = u.name;
+          ul.appendChild(li);
+        });
+      } catch (err) {
+        alert("DB bağlantı hatası: " + err);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -40,7 +40,6 @@ app.get('/users', (req, res) => {
 });
 
 // Sunucu başlat
-app.listen(3000, 'localhost', () => {
-  console.log('Server running at http://localhost:3000');
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server running at http://0.0.0.0:3000');
 });
-

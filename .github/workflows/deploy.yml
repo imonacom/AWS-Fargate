@@ -24,18 +24,22 @@ jobs:
 
     - name: Build, tag, and push Docker image
       run: |
-        IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-        docker build -t ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG .
-        docker tag ${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-        docker push \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        IMAGE_TAG=${{ github.sha }}
+        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+        docker build -t $IMAGE_URI .
+        docker push $IMAGE_URI
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-    - name: Deploy to ECS Fargate
+    - name: Register new task definition revision
+      run: |
+        TASK_DEF=$(aws ecs describe-task-definition --task-definition imona-fargate-task-v4)
+        NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.status, .requiresAttributes, .revision, .taskDefinitionArn, .registeredAt, .registeredBy, .compatibilities)')
+        echo "$NEW_TASK_DEF" > new-task-def.json
+        aws ecs register-task-definition --cli-input-json file://new-task-def.json
+
+    - name: Deploy new task definition to ECS
       run: |
         aws ecs update-service \
           --cluster ${{ secrets.ECS_CLUSTER }} \
           --service ${{ secrets.ECS_SERVICE }} \
-          --force-new-deployment \
-          --task-definition imona-fargate-task-v4
+          --force-new-deployment

@@ -17,7 +17,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-region: eu-central-1
 
     - name: Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v2
@@ -25,7 +25,7 @@ jobs:
     - name: Build, tag, and push Docker image
       run: |
         IMAGE_TAG=${{ github.sha }}
-        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/fargate-poc:$IMAGE_TAG
         docker build -t $IMAGE_URI .
         docker push $IMAGE_URI
         echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
@@ -40,6 +40,6 @@ jobs:
     - name: Deploy new task definition to ECS
       run: |
         aws ecs update-service \
-          --cluster ${{ secrets.ECS_CLUSTER }} \
-          --service ${{ secrets.ECS_SERVICE }} \
+          --cluster imona-fargate-cluster \
+          --service imona-fargate-task-v4-service-doqr5ih7 \
           --force-new-deployment

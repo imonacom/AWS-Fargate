@@ -26,20 +26,31 @@ jobs:
       run: |
         IMAGE_TAG=${{ github.sha }}
         IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-central-1.amazonaws.com/fargate-poc:$IMAGE_TAG
+        echo "🔧 Building Docker image: $IMAGE_URI"
         docker build -t $IMAGE_URI .
         docker push $IMAGE_URI
         echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+
     - name: Register new task definition revision
       run: |
+        echo "📦 Registering new ECS task definition revision..."
         TASK_DEF=$(aws ecs describe-task-definition --task-definition imona-fargate-task-v4)
-        NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$IMAGE_URI" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.status, .requiresAttributes, .revision, .taskDefinitionArn, .registeredAt, .registeredBy, .compatibilities)')
+        NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "$IMAGE_URI" \
+          '.taskDefinition 
+          | .containerDefinitions[0].image = $IMAGE 
+          | del(.status, .requiresAttributes, .revision, .taskDefinitionArn, .registeredAt, .registeredBy, .compatibilities)')
         echo "$NEW_TASK_DEF" > new-task-def.json
         aws ecs register-task-definition --cli-input-json file://new-task-def.json
+        echo "✅ Task definition registered successfully."
 
     - name: Deploy new task definition to ECS
       run: |
+        echo "🚀 Deploying new revision to ECS service..."
         aws ecs update-service \
           --cluster imona-fargate-cluster \
           --service imona-fargate-task-v4-service-doqr5ih7 \
           --force-new-deployment
+        echo "✅ ECS service updated successfully."

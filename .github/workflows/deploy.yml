@@ -47,10 +47,11 @@ jobs:
         echo "✅ Task definition registered successfully."
 
     - name: Deploy new task definition to ECS
-      run: |
-        echo "🚀 Deploying new revision to ECS service..."
-        aws ecs update-service \
-          --cluster imona-fargate-cluster \
-          --service imona-fargate-task-v4-service-doqr5ih7 \
-          --force-new-deployment
-        echo "✅ ECS service updated successfully."
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          aws ecs update-service \
+            --cluster imona-fargate-cluster \
+            --service imona-fargate-task-v4-service-doqr5ih7 \
+            --task-definition $NEW_TASK_DEF_ARN \
+            --force-new-deployment
+      

@@ -25,7 +25,7 @@ connection.connect(err => {
 
 // Basit endpoint
 app.get('/', (req, res) => {
-  res.send('🚀 Fargate CI/CD test — new version deployed automatically!');
+  res.send('🚀 Fargate CI/CD test — new version deployed automatically! yessss');
 });
 
 // Users endpoint

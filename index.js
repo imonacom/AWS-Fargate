@@ -34,7 +34,7 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.send('🚀 Fargate CI/CD test — new version deployed automatically! You can try carefully!');
+  res.send('🚀 Fargate CI/CD test — new version deployed automatically! You can try carefully! Last');
 });
 
 // Users endpoint

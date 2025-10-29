@@ -17,17 +17,24 @@ const connection = mysql.createConnection({
 // DB bağlantısını test et
 connection.connect(err => {
   if (err) {
-    console.error('DB connection error:', err);
-    return;
+    console.error('❌ DB connection error:', err);
+  } else {
+    console.log('✅ Connected to MySQL RDS');
   }
-  console.log('Connected to MySQL RDS');
 });
 
-// Basit endpoint
+// Health check endpoint (ALB için)
+app.get('/health', (req, res) => {
+  // Veritabanı bağlantısı kontrolü
+  if (connection.state === 'disconnected') {
+    return res.status(500).send('DB disconnected');
+  }
+  res.status(200).send('OK');
+});
+
+// Root endpoint
 app.get('/', (req, res) => {
   res.send('🚀 Fargate CI/CD test — new version deployed automatically! You can try carefully!');
-
-  
 });
 
 // Users endpoint
@@ -42,6 +49,6 @@ app.get('/users', (req, res) => {
 });
 
 // Sunucu başlat
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Server running at http://0.0.0.0:3000');
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running at http://0.0.0.0:${port}`);
 });

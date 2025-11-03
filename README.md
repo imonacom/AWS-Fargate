@@ -57,16 +57,26 @@ CloudWatch → ECS ve uygulama metriklerini ve loglarını toplar.
 SNS → CloudWatch alarm durumlarında e-posta bildirimi gönderir.
 
 ⚙️ Kullanılan Teknolojiler
+
 Kategori	Araç / Servis
-Bulut Platformu	AWS
-Compute (Çalışma Katmanı)	ECS Fargate
-Container Registry	Amazon ECR
-Veritabanı	Amazon RDS (MySQL)
-Monitoring & Alerts	CloudWatch, SNS
-Ağ Katmanı	VPC, ALB, NAT Gateway, Security Groups
-CI/CD	GitHub Actions
-Runtime	Node.js
-Containerization	Docker
+Bulut Platformu	AWS.
+
+Compute (Çalışma Katmanı)	ECS Fargate.
+
+Container Registry	Amazon ECR.
+
+Veritabanı	Amazon RDS (MySQL).
+
+Monitoring & Alerts	CloudWatch, SNS.
+
+Ağ Katmanı	VPC, ALB, NAT Gateway, Security Groups.
+
+CI/CD	GitHub Actions.
+
+Runtime	Node.js.
+
+Containerization	Docker.
+
 🔐 Güvenlik
 
 Tüm AWS erişim anahtarları ve değişkenler GitHub Secrets altında saklanır.

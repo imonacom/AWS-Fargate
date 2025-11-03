@@ -57,16 +57,26 @@ CloudWatch → ECS ve uygulama metriklerini ve loglarını toplar.
 SNS → CloudWatch alarm durumlarında e-posta bildirimi gönderir.
 
 ⚙️ Kullanılan Teknolojiler
+
 Kategori	Araç / Servis
-Bulut Platformu	AWS
-Compute (Çalışma Katmanı)	ECS Fargate
-Container Registry	Amazon ECR
-Veritabanı	Amazon RDS (MySQL)
-Monitoring & Alerts	CloudWatch, SNS
-Ağ Katmanı	VPC, ALB, NAT Gateway, Security Groups
-CI/CD	GitHub Actions
-Runtime	Node.js
-Containerization	Docker
+Bulut Platformu	AWS.
+
+Compute (Çalışma Katmanı)	ECS Fargate.
+
+Container Registry	Amazon ECR.
+
+Veritabanı	Amazon RDS (MySQL).
+
+Monitoring & Alerts	CloudWatch, SNS.
+
+Ağ Katmanı	VPC, ALB, NAT Gateway, Security Groups.
+
+CI/CD	GitHub Actions.
+
+Runtime	Node.js.
+
+Containerization	Docker.
+
 🔐 Güvenlik
 
 Tüm AWS erişim anahtarları ve değişkenler GitHub Secrets altında saklanır.
@@ -87,15 +97,6 @@ CloudWatch + SNS ile izleme ve bildirim mekanizması uygulandı.
 Developer Push → GitHub Actions Trigger → Docker Build → ECR Push →
 ECS Task Update → Fargate Redeploy → CloudWatch Monitoring → SNS Alert
 
-📦 Proje Yapısı
-.
-├── app.js                 # Node.js backend
-├── Dockerfile             # Docker imajı oluşturma dosyası
-├── package.json           # Bağımlılıklar
-├── .github/
-│   └── workflows/
-│       └── deploy.yml     # CI/CD pipeline dosyası
-└── README.md              # Proje açıklaması
 
 📊 Mimari Diyagram
 

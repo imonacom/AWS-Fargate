@@ -1,83 +1,103 @@
-# AWS Fargate PoC — Serverless Node.js Deployment
+🚀 AWS Fargate PoC — Sunucusuz Node.js Dağıtımı
 
-Bu proje, Node.js tabanlı bir web uygulamasını AWS üzerinde tamamen serverless bir yapıda çalıştırmak için hazırladığım küçük bir **Fargate Proof of Concept (PoC)** çalışmasıdır.  
-Amacım, EC2 gibi fiziksel sunucu yönetimiyle uğraşmadan, container’ı doğrudan **ECS Fargate** üzerinde çalıştırmaktı.
+Bu proje, Node.js tabanlı bir web uygulamasını AWS Fargate üzerinde tam otomatik CI/CD hattı ile dağıtmak için hazırlanmış bir Proof of Concept (PoC) çalışmasıdır.
+Amaç, hiçbir manuel sunucu yönetimi yapmadan tamamen sunucusuz (serverless) bir yapı üzerinde container’ı otomatik olarak çalıştırmaktır.
 
----
+🧩 Mimari Özeti
 
-## 🚀 Amaç
+Proje mimarisi dört ana katmandan oluşur:
 
-Basit bir Node.js uygulamasını **Dockerize edip**, AWS ECR’a push ettim.  
-Sonrasında ECS üzerinden **Fargate** kullanarak container’ı ayağa kaldırdım.  
-Bu süreçte AWS servisleri arasında bağlantıları (ECR → ECS → IAM → Security Group → CloudWatch) manuel olarak oluşturdum.
+1. CI/CD Pipeline (GitHub Actions)
 
----
+Kod main branch’ine gönderildiğinde otomatik olarak devreye girer.
+Aşamalar:
 
-## ⚙️ Kullanılan AWS Servisleri
+Kaynak Kodun Checkout Edilmesi
 
-- **Amazon ECR** → Docker imajını barındırmak için  
-- **Amazon ECS (Fargate)** → Container’ı sunucusuz şekilde çalıştırmak için  
-- **IAM Role** → ECS’in ECR’dan imaj çekebilmesi için gerekli yetkilendirme  
-- **VPC & Security Group** → Ağ yönetimi ve port 3000 erişimi  
-- **CloudWatch Logs** → Uygulama loglarını izlemek için  
+AWS Kimlik Bilgilerinin Ayarlanması (GitHub Secrets)
 
----
+Docker Image Oluşturulması (Build)
 
-## 📦 Proje Akışı
+Amazon ECR’a Push Edilmesi
 
-1. Node.js uygulamasını `Dockerfile` kullanarak container haline getirdim.  
-2. Docker image’ı AWS ECR’a push ettim.  
-3. ECS üzerinde bir **Task Definition** tanımladım.  
-4. Fargate Service oluşturarak container’ı public IP üzerinden erişilebilir hale getirdim.  
-5. Tarayıcıdan test ederek çalıştığını doğruladım (`http://<public-ip>:3000`).  
+Yeni ECS Task Definition Kaydı
 
-Uygulama başarıyla döndüğünde konsolda `Server running on port 3000` mesajı görülüyor.
+ECS Servisinin Güncellenmesi ve Yeni Dağıtımın Başlatılması
 
----
+Bu süreç sayesinde her kod değişikliği sonrası otomatik olarak yeni container versiyonu AWS üzerinde ayağa kalkar.
 
-## 🐳 Docker Komutları
+2. Ağ ve Güvenlik (Networking & Security)
 
-```bash
-# Docker image oluştur
-docker build -t fargate-poc .
+CloudFront → CDN, SSL ve önbellekleme katmanı sağlar.
 
-# AWS ECR'a giriş yap
-aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com
+AWS WAF → Web uygulamasını zararlı trafiğe karşı korur.
 
-# Image'ı etiketle
-docker tag fargate-poc:latest <AWS_ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/fargate-poc:latest
+Security Groups → ALB ve ECS için güvenli bağlantı kurallarını tanımlar.
 
-# Image'ı ECR'a yükle
-docker push <AWS_ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/fargate-poc:latest
+VPC → Public (ALB) ve Private (ECS & RDS) subnet’lerden oluşur.
 
+NAT Gateway → ECS’in internet erişimini sağlar.
 
-## ☁️ ECS & Fargate Kurulumu
-# ECS cluster oluştur
-aws ecs create-cluster --cluster-name fargate-poc-cluster
+VPC Endpoints (ECR / S3) → AWS servislerine özel ağ üzerinden erişim sağlar.
 
-# Task Definition kaydet (örnek JSON dosyası ile)
-aws ecs register-task-definition --cli-input-json file://task-definition.json
+3. Uygulama Katmanı (Application Layer)
 
-# Fargate service oluştur
-aws ecs create-service \
-  --cluster fargate-poc-cluster \
-  --service-name fargate-poc-service \
-  --task-definition fargate-poc-task \
-  --desired-count 1 \
-  --launch-type FARGATE \
-  --network-configuration "awsvpcConfiguration={subnets=[subnet-xxxx],securityGroups=[sg-xxxx],assignPublicIp=ENABLED}"
+ALB (Application Load Balancer) gelen trafiği Target Group üzerinden ECS Fargate Service’e yönlendirir.
 
-## 🧪 Test
+ECS Fargate Service, container içinde çalışan Node.js uygulamasını çalıştırır.
 
-http://<public-ip>:3000
+Uygulama RDS MySQL veritabanına bağlıdır.
 
-Yanıt olarak:
-Server running on port 3000
+Tüm yapı serverless ve containerized olarak yönetilir — EC2 sunucusu yoktur.
 
-CloudWatch üzerinde container loglarını da görüntüledim.
+4. İzleme ve Bildirim (Monitoring & Alerts)
 
-## 🧠 Özet
+CloudWatch → ECS ve uygulama metriklerini ve loglarını toplar.
 
-Bu PoC sayesinde AWS Fargate üzerinde bir Node.js uygulamasının EC2 gerektirmeden nasıl çalıştırılabileceğini deneyimledim.
-Sunucusuz mimari yaklaşımıyla sistemin yönetim yükü azaldı ve ölçeklenebilirlik kolaylaştı.
-Ayrıca AWS CLI üzerinden servislerin manuel kurulumu, mimariyi daha iyi anlamamı sağladı.
+SNS → CloudWatch alarm durumlarında e-posta bildirimi gönderir.
+
+⚙️ Kullanılan Teknolojiler
+Kategori	Araç / Servis
+Bulut Platformu	AWS
+Compute (Çalışma Katmanı)	ECS Fargate
+Container Registry	Amazon ECR
+Veritabanı	Amazon RDS (MySQL)
+Monitoring & Alerts	CloudWatch, SNS
+Ağ Katmanı	VPC, ALB, NAT Gateway, Security Groups
+CI/CD	GitHub Actions
+Runtime	Node.js
+Containerization	Docker
+🔐 Güvenlik
+
+Tüm AWS erişim anahtarları ve değişkenler GitHub Secrets altında saklanır.
+
+.env dosyası depoda bulunmaz, .gitignore içine eklenmiştir.
+
+Kod veya yapılandırma dosyalarında gizli bilgi yoktur.
+
+🧠 Öğrenilenler
+
+Commit’ten deploy’a kadar tam otomatik bir pipeline kuruldu.
+
+ECR, ECS Fargate, IAM, CloudWatch entegrasyonları uçtan uca test edildi.
+
+CloudWatch + SNS ile izleme ve bildirim mekanizması uygulandı.
+
+🧾 Süreç Akışı
+Developer Push → GitHub Actions Trigger → Docker Build → ECR Push →
+ECS Task Update → Fargate Redeploy → CloudWatch Monitoring → SNS Alert
+
+📦 Proje Yapısı
+.
+├── app.js                 # Node.js backend
+├── Dockerfile             # Docker imajı oluşturma dosyası
+├── package.json           # Bağımlılıklar
+├── .github/
+│   └── workflows/
+│       └── deploy.yml     # CI/CD pipeline dosyası
+└── README.md              # Proje açıklaması
+
+📊 Mimari Diyagram
+
+Bu diyagram, GitHub Actions pipeline’ından başlayarak AWS Fargate, RDS ve CloudWatch akışını gösterir.
+(Proje dizininde görsel olarak eklenmiştir.)
